@@ -1,0 +1,125 @@
+-- Table for device-measured data usage
+CREATE TABLE DataUsageEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    timestamp INTEGER NOT NULL,
+    mobileDataBytes INTEGER NOT NULL,
+    wifiDataBytes INTEGER NOT NULL,
+    totalBytes INTEGER NOT NULL
+);
+
+-- Table for provider-reported data
+CREATE TABLE ProviderReportEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    timestamp INTEGER NOT NULL,
+    reportedDataBytes INTEGER NOT NULL,
+    remainingDataBytes INTEGER,
+    dataLimitBytes INTEGER,
+    providerName TEXT NOT NULL
+);
+
+-- Table for detected discrepancies
+CREATE TABLE DiscrepancyEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    timestamp INTEGER NOT NULL,
+    deviceMeasurement INTEGER NOT NULL,
+    providerReport INTEGER NOT NULL,
+    differenceBytes INTEGER NOT NULL,
+    differencePercentage REAL NOT NULL,
+    severity TEXT NOT NULL,
+    note TEXT
+);
+
+-- Table for user's data plan
+CREATE TABLE DataPlanEntity (
+    id TEXT PRIMARY KEY NOT NULL,
+    providerName TEXT NOT NULL,
+    dataLimitBytes INTEGER NOT NULL,
+    billingCycleStartDay INTEGER NOT NULL,
+    alertThresholdPercentage REAL NOT NULL,
+    discrepancyThresholdPercentage REAL NOT NULL
+);
+
+-- Queries for DataUsage
+insertDataUsage:
+INSERT INTO DataUsageEntity(id, timestamp, mobileDataBytes, wifiDataBytes, totalBytes)
+VALUES (?, ?, ?, ?, ?);
+
+getAllDataUsage:
+SELECT * FROM DataUsageEntity ORDER BY timestamp DESC;
+
+getDataUsageByDateRange:
+SELECT * FROM DataUsageEntity
+WHERE timestamp BETWEEN ? AND ?
+ORDER BY timestamp DESC;
+
+getLatestDataUsage:
+SELECT * FROM DataUsageEntity
+ORDER BY timestamp DESC
+LIMIT 1;
+
+getTotalUsageInRange:
+SELECT SUM(totalBytes) AS totalUsage
+FROM DataUsageEntity
+WHERE timestamp BETWEEN ? AND ?;
+
+-- Queries for ProviderReport
+insertProviderReport:
+INSERT INTO ProviderReportEntity(id, timestamp, reportedDataBytes, remainingDataBytes, dataLimitBytes, providerName)
+VALUES (?, ?, ?, ?, ?, ?);
+
+getAllProviderReports:
+SELECT * FROM ProviderReportEntity ORDER BY timestamp DESC;
+
+getLatestProviderReport:
+SELECT * FROM ProviderReportEntity
+ORDER BY timestamp DESC
+LIMIT 1;
+
+getProviderReportsByDateRange:
+SELECT * FROM ProviderReportEntity
+WHERE timestamp BETWEEN ? AND ?
+ORDER BY timestamp DESC;
+
+-- Queries for Discrepancy
+insertDiscrepancy:
+INSERT INTO DiscrepancyEntity(id, timestamp, deviceMeasurement, providerReport, differenceBytes, differencePercentage, severity, note)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+
+getAllDiscrepancies:
+SELECT * FROM DiscrepancyEntity ORDER BY timestamp DESC;
+
+getDiscrepanciesByDateRange:
+SELECT * FROM DiscrepancyEntity
+WHERE timestamp BETWEEN ? AND ?
+ORDER BY timestamp DESC;
+
+getDiscrepanciesBySeverity:
+SELECT * FROM DiscrepancyEntity
+WHERE severity = ?
+ORDER BY timestamp DESC;
+
+getLatestDiscrepancy:
+SELECT * FROM DiscrepancyEntity
+ORDER BY timestamp DESC
+LIMIT 1;
+
+-- Queries for DataPlan
+insertOrUpdateDataPlan:
+INSERT OR REPLACE INTO DataPlanEntity(id, providerName, dataLimitBytes, billingCycleStartDay, alertThresholdPercentage, discrepancyThresholdPercentage)
+VALUES (?, ?, ?, ?, ?, ?);
+
+getDataPlan:
+SELECT * FROM DataPlanEntity LIMIT 1;
+
+deleteDataPlan:
+DELETE FROM DataPlanEntity WHERE id = ?;
+
+-- Cleanup queries
+deleteOldDataUsage:
+DELETE FROM DataUsageEntity WHERE timestamp < ?;
+
+deleteOldProviderReports:
+DELETE FROM ProviderReportEntity WHERE timestamp < ?;
+
+deleteOldDiscrepancies:
+DELETE FROM DiscrepancyEntity WHERE timestamp < ?;
