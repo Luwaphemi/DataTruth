@@ -7,8 +7,8 @@ import android.net.ConnectivityManager
 import android.net.TrafficStats
 import android.os.Build
 import android.telephony.TelephonyManager
+import androidx.annotation.RequiresPermission
 import com.example.datatruth.models.DataUsageModel
-import kotlinx.datetime.Clock
 import java.util.Calendar
 import java.util.UUID
 
@@ -43,7 +43,7 @@ class AndroidDataMonitor(
 
         return DataUsageModel(
             id = "usage_${UUID.randomUUID()}",
-            timestamp = Clock.System.now(),
+            timestamp = System.currentTimeMillis(),
             mobileDataBytes = mobileDataBytes,
             wifiDataBytes = wifiDataBytes,
             totalBytes = totalDataBytes
@@ -53,6 +53,7 @@ class AndroidDataMonitor(
     /**
      * Usage from start of current month
      */
+    @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
     override suspend fun getCurrentMonthUsage(): DataUsageModel? {
         val cal = Calendar.getInstance().apply {
             set(Calendar.DAY_OF_MONTH, 1)
@@ -70,6 +71,7 @@ class AndroidDataMonitor(
     /**
      * Accurate usage for a date range (NetworkStatsManager)
      */
+    @RequiresPermission("android.permission.READ_PRIVILEGED_PHONE_STATE")
     override suspend fun getUsageInRange(
         startTimeMillis: Long,
         endTimeMillis: Long
@@ -129,7 +131,7 @@ class AndroidDataMonitor(
 
             DataUsageModel(
                 id = "usage_${UUID.randomUUID()}",
-                timestamp = Clock.System.now(),
+                timestamp = System.currentTimeMillis(),
                 mobileDataBytes = mobile,
                 wifiDataBytes = wifi,
                 totalBytes = mobile + wifi

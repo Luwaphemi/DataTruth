@@ -1,8 +1,9 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.example.datatruth.models
 
-import com.example.datatruth.serialization.InstantSerializer
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
 
 /**
  * Represents data usage measured directly from the device
@@ -10,8 +11,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class DataUsageModel(
     val id: String,
-    @Serializable(with = InstantSerializer::class)
-    val timestamp: Instant,
+    val timestamp: Long,
     val mobileDataBytes: Long,
     val wifiDataBytes: Long,
     val totalBytes: Long = mobileDataBytes + wifiDataBytes,
@@ -24,8 +24,7 @@ data class DataUsageModel(
 @Serializable
 data class ProviderReportModel(
     val id: String,
-    @Serializable(with = InstantSerializer::class)
-    val timestamp: Instant,
+    val timestamp: Long,
     val reportedDataBytes: Long,
     val remainingDataBytes: Long? = null,
     val dataLimitBytes: Long? = null,
@@ -39,8 +38,7 @@ data class ProviderReportModel(
 @Serializable
 data class DiscrepancyModel(
     val id: String,
-    @Serializable(with = InstantSerializer::class)
-    val timestamp: Instant,
+    val timestamp: Long,
     val deviceMeasurement: Long,
     val providerReport: Long,
     val differenceBytes: Long,
@@ -97,30 +95,21 @@ enum class DiscrepancySeverityLevel {
 }
 
 /**
- * -------- Utility Extensions --------
+ * -------- Utility Functions --------
  */
+fun Long.formatToMB(): Double = this / (1024.0 * 1024.0)
 
-/**
- * Convert bytes to megabytes
- */
-fun Long.formatToMB(): Double =
-    this / (1024.0 * 1024.0)
+fun Long.formatToGB(): Double = this / (1024.0 * 1024.0 * 1024.0)
 
-/**
- * Convert bytes to gigabytes
- */
-fun Long.formatToGB(): Double =
-    this / (1024.0 * 1024.0 * 1024.0)
-
-/**
- * Determine discrepancy severity from percentage difference
- */
-fun getDiscrepancySeverity(
-    differencePercentage: Double
-): DiscrepancySeverityLevel =
+fun getDiscrepancySeverity(differencePercentage: Double): DiscrepancySeverityLevel =
     when {
         differencePercentage < 5.0 -> DiscrepancySeverityLevel.LOW
         differencePercentage < 15.0 -> DiscrepancySeverityLevel.MEDIUM
         differencePercentage < 30.0 -> DiscrepancySeverityLevel.HIGH
         else -> DiscrepancySeverityLevel.CRITICAL
     }
+
+/**
+ * Get current time in milliseconds - use this everywhere instead of Clock
+ */
+fun currentTimeMillis(): Long = Clock.System.now().toEpochMilliseconds()

@@ -4,8 +4,6 @@ import com.example.datatruth.db.DataTruthDatabase
 import com.example.datatruth.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlin.random.Random
 
 class DataRepository(private val database: DataTruthDatabase) {
@@ -16,7 +14,7 @@ class DataRepository(private val database: DataTruthDatabase) {
     suspend fun insertDataUsage(usage: DataUsageModel) = withContext(Dispatchers.Default) {
         queries.insertDataUsage(
             id = usage.id,
-            timestamp = usage.timestamp.toEpochMilliseconds(),
+            timestamp = usage.timestamp,
             mobileDataBytes = usage.mobileDataBytes,
             wifiDataBytes = usage.wifiDataBytes,
             totalBytes = usage.totalBytes
@@ -27,7 +25,7 @@ class DataRepository(private val database: DataTruthDatabase) {
     suspend fun insertProviderReport(report: ProviderReportModel) = withContext(Dispatchers.Default) {
         queries.insertProviderReport(
             id = report.id,
-            timestamp = report.timestamp.toEpochMilliseconds(),
+            timestamp = report.timestamp,
             reportedDataBytes = report.reportedDataBytes,
             remainingDataBytes = report.remainingDataBytes,
             dataLimitBytes = report.dataLimitBytes,
@@ -39,7 +37,7 @@ class DataRepository(private val database: DataTruthDatabase) {
     suspend fun insertDiscrepancy(discrepancy: DiscrepancyModel) = withContext(Dispatchers.Default) {
         queries.insertDiscrepancy(
             id = discrepancy.id,
-            timestamp = discrepancy.timestamp.toEpochMilliseconds(),
+            timestamp = discrepancy.timestamp,
             deviceMeasurement = discrepancy.deviceMeasurement,
             providerReport = discrepancy.providerReport,
             differenceBytes = discrepancy.differenceBytes,
@@ -54,7 +52,7 @@ class DataRepository(private val database: DataTruthDatabase) {
         queries.getAllDataUsage().executeAsList().map {
             DataUsageModel(
                 id = it.id,
-                timestamp = Instant.fromEpochMilliseconds(it.timestamp),
+                timestamp = it.timestamp,
                 mobileDataBytes = it.mobileDataBytes,
                 wifiDataBytes = it.wifiDataBytes,
                 totalBytes = it.totalBytes
@@ -67,7 +65,7 @@ class DataRepository(private val database: DataTruthDatabase) {
         queries.getLatestProviderReport().executeAsOneOrNull()?.let {
             ProviderReportModel(
                 id = it.id,
-                timestamp = Instant.fromEpochMilliseconds(it.timestamp),
+                timestamp = it.timestamp,
                 reportedDataBytes = it.reportedDataBytes,
                 remainingDataBytes = it.remainingDataBytes,
                 dataLimitBytes = it.dataLimitBytes,
@@ -81,7 +79,7 @@ class DataRepository(private val database: DataTruthDatabase) {
         queries.getAllDiscrepancies().executeAsList().map {
             DiscrepancyModel(
                 id = it.id,
-                timestamp = Instant.fromEpochMilliseconds(it.timestamp),
+                timestamp = it.timestamp,
                 deviceMeasurement = it.deviceMeasurement,
                 providerReport = it.providerReport,
                 differenceBytes = it.differenceBytes,
@@ -119,12 +117,9 @@ class DataRepository(private val database: DataTruthDatabase) {
     }
 
     // Get total usage in date range
-    suspend fun getTotalUsageInRange(startTime: Instant, endTime: Instant): Long =
+    suspend fun getTotalUsageInRange(startTime: Long, endTime: Long): Long =
         withContext(Dispatchers.Default) {
-            queries.getTotalUsageInRange(
-                startTime.toEpochMilliseconds(),
-                endTime.toEpochMilliseconds()
-            ).executeAsOneOrNull()?.totalUsage ?: 0L
+            queries.getTotalUsageInRange(startTime, endTime).executeAsOneOrNull()?.totalUsage ?: 0L
         }
 
     // Calculate and detect discrepancies
@@ -137,9 +132,10 @@ class DataRepository(private val database: DataTruthDatabase) {
             val percentageDiff = (difference.toDouble() / providerReport.reportedDataBytes.toDouble()) * 100.0
 
             if (kotlin.math.abs(percentageDiff) > 5.0) {
+                val now = currentTimeMillis()
                 val discrepancy = DiscrepancyModel(
-                    id = "disc_${Clock.System.now().toEpochMilliseconds()}",
-                    timestamp = Clock.System.now(),
+                    id = "disc_$now",
+                    timestamp = now,
                     deviceMeasurement = deviceUsage.totalBytes,
                     providerReport = providerReport.reportedDataBytes,
                     differenceBytes = difference,
@@ -164,9 +160,10 @@ class DataRepository(private val database: DataTruthDatabase) {
         val discrepancyFactor = Random.nextDouble(0.9, 1.1)
         val providerReported = (actualDeviceUsage * discrepancyFactor).toLong()
 
+        val now = currentTimeMillis()
         val report = ProviderReportModel(
-            id = "provider_${Clock.System.now().toEpochMilliseconds()}",
-            timestamp = Clock.System.now(),
+            id = "provider_$now",
+            timestamp = now,
             reportedDataBytes = providerReported,
             remainingDataBytes = 5_000_000_000L - providerReported,
             dataLimitBytes = 5_000_000_000L,

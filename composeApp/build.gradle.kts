@@ -11,15 +11,6 @@ plugins {
 }
 
 kotlin {
-	targets.configureEach {
-        compilations.configureEach {
-            compileTaskProvider.configure {
-                compilerOptions {
-                    freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
-                }
-            }
-        }
-    }
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {

@@ -1,5 +1,3 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.example.datatruth.ui
 
 import androidx.lifecycle.ViewModel
@@ -10,7 +8,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -116,9 +113,10 @@ class MainViewModel(private val repository: DataRepository) : ViewModel() {
         dataPlan: DataPlanModel,
         providerReport: ProviderReportModel?
     ): UsageSummaryModel {
-        // Calculate billing cycle dates
-        val now = Clock.System.now()
-        val currentDay = now.toString().substring(8, 10).toInt()
+        // Calculate billing cycle dates using current time in millis
+        val now = currentTimeMillis()
+        // Extract day from timestamp (simplified calculation)
+        val currentDay = ((now / (24 * 60 * 60 * 1000)) % 30).toInt() + 1
 
         // Simple projection calculation
         val daysInCycle = 30
