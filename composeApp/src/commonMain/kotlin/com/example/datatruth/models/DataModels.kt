@@ -1,15 +1,16 @@
 package com.example.datatruth.models
 
+import com.example.datatruth.serialization.InstantSerializer
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlin.time.ExperimentalTime
 
 /**
- * Represents data usage measured by the device
+ * Represents data usage measured directly from the device
  */
 @Serializable
-data class DataUsageModel @OptIn(ExperimentalTime::class) constructor(
+data class DataUsageModel(
     val id: String,
+    @Serializable(with = InstantSerializer::class)
     val timestamp: Instant,
     val mobileDataBytes: Long,
     val wifiDataBytes: Long,
@@ -18,25 +19,27 @@ data class DataUsageModel @OptIn(ExperimentalTime::class) constructor(
 )
 
 /**
- * Represents data reported by the network provider
+ * Represents data usage reported by the network provider
  */
 @Serializable
 data class ProviderReportModel(
     val id: String,
+    @Serializable(with = InstantSerializer::class)
     val timestamp: Instant,
     val reportedDataBytes: Long,
-    val remainingDataBytes: Long?,
-    val dataLimitBytes: Long?,
+    val remainingDataBytes: Long? = null,
+    val dataLimitBytes: Long? = null,
     val providerName: String,
     val source: DataSourceType = DataSourceType.PROVIDER
 )
 
 /**
- * Represents a discrepancy between device measurement and provider report
+ * Represents a discrepancy between device usage and provider report
  */
 @Serializable
 data class DiscrepancyModel(
     val id: String,
+    @Serializable(with = InstantSerializer::class)
     val timestamp: Instant,
     val deviceMeasurement: Long,
     val providerReport: Long,
@@ -47,7 +50,7 @@ data class DiscrepancyModel(
 )
 
 /**
- * User's data plan settings
+ * User-configured data plan
  */
 @Serializable
 data class DataPlanModel(
@@ -60,7 +63,7 @@ data class DataPlanModel(
 )
 
 /**
- * Summary statistics for display
+ * Aggregated usage summary for UI display
  */
 @Serializable
 data class UsageSummaryModel(
@@ -75,11 +78,17 @@ data class UsageSummaryModel(
     val discrepancyAmount: Long = 0
 )
 
+/**
+ * Source of data usage
+ */
 enum class DataSourceType {
     DEVICE,
     PROVIDER
 }
 
+/**
+ * Severity levels for detected discrepancies
+ */
 enum class DiscrepancySeverityLevel {
     LOW,
     MEDIUM,
@@ -88,16 +97,30 @@ enum class DiscrepancySeverityLevel {
 }
 
 /**
- * Helper functions
+ * -------- Utility Extensions --------
  */
-fun Long.formatToMB(): Double = this / (1024.0 * 1024.0)
-fun Long.formatToGB(): Double = this / (1024.0 * 1024.0 * 1024.0)
 
-fun getDiscrepancySeverity(differencePercentage: Double): DiscrepancySeverityLevel {
-    return when {
+/**
+ * Convert bytes to megabytes
+ */
+fun Long.formatToMB(): Double =
+    this / (1024.0 * 1024.0)
+
+/**
+ * Convert bytes to gigabytes
+ */
+fun Long.formatToGB(): Double =
+    this / (1024.0 * 1024.0 * 1024.0)
+
+/**
+ * Determine discrepancy severity from percentage difference
+ */
+fun getDiscrepancySeverity(
+    differencePercentage: Double
+): DiscrepancySeverityLevel =
+    when {
         differencePercentage < 5.0 -> DiscrepancySeverityLevel.LOW
         differencePercentage < 15.0 -> DiscrepancySeverityLevel.MEDIUM
         differencePercentage < 30.0 -> DiscrepancySeverityLevel.HIGH
         else -> DiscrepancySeverityLevel.CRITICAL
     }
-}
