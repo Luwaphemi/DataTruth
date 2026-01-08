@@ -6,6 +6,11 @@ A Kotlin Multiplatform (KMP) application that monitors mobile data usage and com
 [Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-blue.svg)](https://kotlinlang.org)
 [Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.9.3-green.svg)](https://www.jetbrains.com/lp/compose-multiplatform/)
 
+Short Demo Video
+
+Watch the app in action: [DataTruth Demo](https://youtube.com/shorts/SbWJLAIsTAA)
+
+
 Overview
 
 DataTruth empowers mobile users to take control of their data consumption by providing transparent, real-time monitoring and comparison tools. The app measures actual device data usage and compares it against provider-reported usage, alerting users to any discrepancies that may indicate billing errors or unauthorized data charges.
