@@ -11,9 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 import kotlin.math.abs
-import kotlin.time.ExperimentalTime
 
 data class EnhancedUiState(
     val isLoading: Boolean = false,
@@ -30,7 +28,7 @@ data class EnhancedUiState(
 
 class EnhancedViewModel(
     private val repository: DataRepository,
-    private val dataMonitor: DataMonitor   //  PLATFORM-AGNOSTIC
+    private val dataMonitor: DataMonitor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EnhancedUiState())
@@ -77,16 +75,13 @@ class EnhancedViewModel(
     }
 
     fun loadUsageForDateRange(
-        startInstant: Instant,
-        endInstant: Instant
+        startMillis: Long,
+        endMillis: Long
     ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val usage = dataMonitor.getUsageInRange(
-                startInstant.toEpochMilliseconds(),
-                endInstant.toEpochMilliseconds()
-            )
+            val usage = dataMonitor.getUsageInRange(startMillis, endMillis)
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -207,8 +202,6 @@ class EnhancedViewModel(
             loadAllData()
         }
     }
-
-
 
     fun clearMessages() {
         _uiState.value = _uiState.value.copy(

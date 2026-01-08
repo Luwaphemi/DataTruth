@@ -100,7 +100,7 @@ fun DashboardScreen(
                     ActionButtons(
                         onRefresh = onRefresh,
                         onFetchProvider = {
-                            val mockUsage = 2_500_000_000L // 2.5 GB
+                            val mockUsage = 2_500_000_000L
                             onFetchProviderData(mockUsage)
                         }
                     )
@@ -162,10 +162,6 @@ fun WelcomeBanner() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "👋",
-                fontSize = 48.sp
-            )
-            Text(
                 text = "Welcome to DataTruth!",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
@@ -197,12 +193,7 @@ fun ActionButtons(
                 .height(56.dp),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("🔄", fontSize = 20.sp)
-                Text("Refresh", fontSize = 14.sp)
-            }
+            Text("Refresh", fontSize = 14.sp)
         }
 
         Button(
@@ -215,12 +206,7 @@ fun ActionButtons(
                 containerColor = MaterialTheme.colorScheme.secondary
             )
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("📡", fontSize = 20.sp)
-                Text("Fetch Provider", fontSize = 14.sp)
-            }
+            Text("Fetch Provider", fontSize = 14.sp)
         }
     }
 }
@@ -262,7 +248,6 @@ fun UsageSummaryCard(summary: UsageSummaryModel) {
                 )
             }
 
-            // Progress Bar
             Column(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -291,7 +276,6 @@ fun UsageSummaryCard(summary: UsageSummaryModel) {
                 }
             }
 
-            // Stats Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -300,7 +284,7 @@ fun UsageSummaryCard(summary: UsageSummaryModel) {
                     label = "Used",
                     value = "${summary.percentageUsed.toInt()}%"
                 )
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier
                         .height(40.dp)
                         .width(1.dp)
@@ -312,14 +296,14 @@ fun UsageSummaryCard(summary: UsageSummaryModel) {
             }
 
             if (summary.hasDiscrepancy) {
-                Divider()
+                HorizontalDivider()
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "⚠️ Discrepancy: ${kotlin.math.abs(summary.discrepancyAmount).formatToMB().toInt()} MB",
+                        text = "Discrepancy: ${kotlin.math.abs(summary.discrepancyAmount).formatToMB().toInt()} MB",
                         color = MaterialTheme.colorScheme.error,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium
@@ -364,19 +348,13 @@ fun ProviderReportCard(report: ProviderReportModel) {
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("📡", fontSize = 24.sp)
-                Text(
-                    text = "Provider Report",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            Text(
+                text = "Provider Report",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
 
-            Divider()
+            HorizontalDivider()
 
             InfoRow(label = "Provider", value = report.providerName)
             InfoRow(
@@ -413,77 +391,6 @@ fun InfoRow(label: String, value: String) {
 }
 
 @Composable
-fun DiscrepancyCard(discrepancy: DiscrepancyModel) {
-    val backgroundColor = when (discrepancy.severity) {
-        DiscrepancySeverityLevel.LOW -> MaterialTheme.colorScheme.surfaceVariant
-        DiscrepancySeverityLevel.MEDIUM -> MaterialTheme.colorScheme.tertiaryContainer
-        DiscrepancySeverityLevel.HIGH -> MaterialTheme.colorScheme.errorContainer
-        DiscrepancySeverityLevel.CRITICAL -> MaterialTheme.colorScheme.error
-    }
-
-    val textColor = when (discrepancy.severity) {
-        DiscrepancySeverityLevel.CRITICAL -> MaterialTheme.colorScheme.onError
-        else -> MaterialTheme.colorScheme.onSurface
-    }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = when(discrepancy.severity) {
-                            DiscrepancySeverityLevel.LOW -> "ℹ️"
-                            DiscrepancySeverityLevel.MEDIUM -> "⚠️"
-                            DiscrepancySeverityLevel.HIGH -> "🚨"
-                            DiscrepancySeverityLevel.CRITICAL -> "‼️"
-                        },
-                        fontSize = 24.sp
-                    )
-                    Text(
-                        text = discrepancy.severity.name,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor
-                    )
-                }
-                Text(
-                    text = "${discrepancy.differencePercentage.toInt()}%",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    color = textColor
-                )
-            }
-            Text(
-                text = "Difference: ${discrepancy.differenceBytes.formatToMB().toInt()} MB",
-                color = textColor
-            )
-            discrepancy.note?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = textColor.copy(alpha = 0.8f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun SetupDataPlanCard(onSetup: (DataPlanModel) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -499,8 +406,6 @@ fun SetupDataPlanCard(onSetup: (DataPlanModel) -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("⚙️", fontSize = 48.sp)
-
             Text(
                 text = "Setup Your Data Plan",
                 style = MaterialTheme.typography.titleLarge,

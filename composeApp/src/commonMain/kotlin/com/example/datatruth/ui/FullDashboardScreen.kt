@@ -12,20 +12,27 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.datatruth.models.*
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 
+// Helper extension function
+fun Double.roundTo(decimals: Int): Double {
+    var multiplier = 1.0
+    repeat(decimals) { multiplier *= 10 }
+    return kotlin.math.round(this * multiplier) / multiplier
+}
+
+// Format timestamp from millis to readable string
+fun formatTimestamp(millis: Long): String {
+    // Convert to a simple time format
+    val date = java.util.Date(millis)
+    val format = java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault())
+    return format.format(date)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,39 +44,36 @@ fun FullDashboard(
     onSetupPlan: (String, Double, Int) -> Unit,
     onRefresh: () -> Unit,
     onClearMessages: () -> Unit
-)
- {
+) {
     var showSetupDialog by remember { mutableStateOf(false) }
 
-     Scaffold(
-         topBar = {
-             TopAppBar(
-                 title = {
-                     Box(
-                         modifier = Modifier.fillMaxWidth(),
-                         contentAlignment = Alignment.Center
-                     ) {
-                         Column(
-                             horizontalAlignment = Alignment.CenterHorizontally
-                         ) {
-                             AnimatedVisibility(
-                                 visible = true,
-                                 enter = fadeIn() + scaleIn(initialScale = 0.9f)
-                             ) {
-                                 logo()
-                             }
-                         }
-                     }
-                 },
-                 colors = TopAppBarDefaults.topAppBarColors(
-                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                 )
-             )
-         }
-     )
-
-     { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn() + scaleIn(initialScale = 0.9f)
+                            ) {
+                                logo()
+                            }
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        }
+    ) { padding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -257,7 +261,7 @@ fun QuickActionsCard(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Quick Actions",
+                text = "⚡ Quick Actions",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -302,7 +306,7 @@ fun ActionButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(80.dp),
+        modifier = modifier.height(85.dp),
         enabled = enabled,
         shape = RoundedCornerShape(16.dp),
         colors = ButtonDefaults.buttonColors(
@@ -315,6 +319,7 @@ fun ActionButton(
             verticalArrangement = Arrangement.Center
         ) {
             Text(icon, fontSize = 28.sp)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 label,
                 fontSize = 11.sp,
@@ -356,7 +361,7 @@ fun MainStatsCard(
             ) {
                 Column {
                     Text(
-                        text = "Data Usage",
+                        text = "📊 Data Usage",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -374,13 +379,17 @@ fun MainStatsCard(
                         .background(MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "${summary.daysRemainingInCycle}\ndays",
-                        fontSize = 12.sp,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Bold,
-                        lineHeight = 14.sp
-                    )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "${summary.daysRemainingInCycle}",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "days",
+                            fontSize = 10.sp
+                        )
+                    }
                 }
             }
 
@@ -406,26 +415,23 @@ fun MainStatsCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "${summary.currentCycleUsage.formatToGB().roundTo(2)} GB"
-                        ,
+                        text = "${summary.currentCycleUsage.formatToGB().roundTo(2)} GB",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
 
                     Text(
-                        text = "${(summary.dataLimit ?: 0L).formatToGB().roundTo(2)} GB",
+                        text = "of ${(summary.dataLimit ?: 0L).formatToGB().roundTo(2)} GB",
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-
                 }
 
                 Text(
-                    text = "${summary.percentageUsed.roundTo(1)}% used • Daily avg: ${summary.averageDailyUsage.formatToMB().toInt()} MB",
+                    text = "📈 ${summary.percentageUsed.roundTo(1)}% used • Daily avg: ${summary.averageDailyUsage.formatToMB().toInt()} MB",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
             }
 
             // Discrepancy Warning
@@ -467,7 +473,8 @@ fun MainStatsCard(
 fun CurrentUsageCard(usage: DataUsageModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
@@ -483,11 +490,11 @@ fun CurrentUsageCard(usage: DataUsageModel) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                UsageItem("Mobile", usage.mobileDataBytes)
-                UsageItem("WiFi", usage.wifiDataBytes)
-                UsageItem("Total", usage.totalBytes)
+                UsageItem("📶 Mobile", usage.mobileDataBytes)
+                UsageItem("📡 WiFi", usage.wifiDataBytes)
+                UsageItem("📊 Total", usage.totalBytes)
             }
         }
     }
@@ -498,9 +505,9 @@ fun UsageItem(label: String, bytes: Long) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             "${bytes.formatToMB().roundTo(0).toInt()} MB",
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp
         )
-
         Text(
             label,
             style = MaterialTheme.typography.bodySmall,
@@ -522,7 +529,8 @@ fun ComparisonCard(deviceUsage: Long, providerUsage: Long) {
             else
                 MaterialTheme.colorScheme.errorContainer
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
@@ -539,18 +547,20 @@ fun ComparisonCard(deviceUsage: Long, providerUsage: Long) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                ComparisonItem("Your Device", deviceUsage)
-                Text("VS", fontWeight = FontWeight.Bold, fontSize = 24.sp)
-                ComparisonItem("Provider", providerUsage)
+                ComparisonItem("📱 Your Device", deviceUsage)
+                Text("⚡", fontWeight = FontWeight.Bold, fontSize = 28.sp)
+                ComparisonItem("📡 Provider", providerUsage)
             }
 
             if (!isMatch) {
                 Text(
                     "Difference: ${kotlin.math.abs(difference).formatToMB().toInt()} MB",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -565,17 +575,79 @@ fun ComparisonItem(label: String, bytes: Long) {
             fontWeight = FontWeight.Bold,
             fontSize = 20.sp
         )
-
         Text(label, style = MaterialTheme.typography.bodyMedium)
     }
 }
 
-@OptIn(kotlin.time.ExperimentalTime::class)
+@Composable
+fun DiscrepancyCard(discrepancy: DiscrepancyModel) {
+    val severityEmoji = when (discrepancy.severity) {
+        DiscrepancySeverityLevel.LOW -> "ℹ️"
+        DiscrepancySeverityLevel.MEDIUM -> "⚠️"
+        DiscrepancySeverityLevel.HIGH -> "🚨"
+        DiscrepancySeverityLevel.CRITICAL -> "‼️"
+    }
+
+    val backgroundColor = when (discrepancy.severity) {
+        DiscrepancySeverityLevel.LOW -> MaterialTheme.colorScheme.surfaceVariant
+        DiscrepancySeverityLevel.MEDIUM -> MaterialTheme.colorScheme.tertiaryContainer
+        DiscrepancySeverityLevel.HIGH -> MaterialTheme.colorScheme.errorContainer
+        DiscrepancySeverityLevel.CRITICAL -> MaterialTheme.colorScheme.error
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(severityEmoji, fontSize = 24.sp)
+                    Text(
+                        text = discrepancy.severity.name,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Text(
+                    text = "${discrepancy.differencePercentage.roundTo(1)}%",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            }
+            Text(
+                "Device: ${discrepancy.deviceMeasurement.formatToMB().toInt()} MB vs Provider: ${discrepancy.providerReport.formatToMB().toInt()} MB",
+                style = MaterialTheme.typography.bodySmall
+            )
+            discrepancy.note?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun UsageHistoryItem(usage: DataUsageModel) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier
@@ -587,10 +659,11 @@ fun UsageHistoryItem(usage: DataUsageModel) {
             Column {
                 Text(
                     "${usage.totalBytes.formatToMB().toInt()} MB",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
                 )
                 Text(
-                    usage.timestamp.toString().substring(0, 16),
+                    formatTimestamp(usage.timestamp),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -620,7 +693,8 @@ fun SetupPromptCard(onSetup: () -> Unit) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer
         ),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -637,7 +711,7 @@ fun SetupPromptCard(onSetup: () -> Unit) {
                 textAlign = TextAlign.Center
             )
             Text(
-                "Configure your plan to start monitoring",
+                "Configure your plan to start monitoring and detect discrepancies",
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -648,7 +722,7 @@ fun SetupPromptCard(onSetup: () -> Unit) {
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Setup Plan", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("🚀 Setup Plan", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -666,7 +740,12 @@ fun SetupPlanDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Setup Data Plan") },
+        title = {
+            Text(
+                "⚙️ Setup Data Plan",
+                fontWeight = FontWeight.Bold
+            )
+        },
         text = {
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -675,22 +754,27 @@ fun SetupPlanDialog(
                     value = provider,
                     onValueChange = { provider = it },
                     label = { Text("Provider Name") },
-                    placeholder = { Text("e.g., MTN, Airtel") },
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("e.g., MTN, Airtel, Glo") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
                     value = dataLimit,
                     onValueChange = { dataLimit = it },
                     label = { Text("Data Limit (GB)") },
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("e.g., 5, 10, 20") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
 
                 OutlinedTextField(
                     value = billingDay,
                     onValueChange = { billingDay = it },
                     label = { Text("Billing Start Day (1-31)") },
-                    modifier = Modifier.fillMaxWidth()
+                    placeholder = { Text("e.g., 1, 15, 25") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
                 )
             }
         },
@@ -701,9 +785,10 @@ fun SetupPlanDialog(
                     val day = billingDay.toIntOrNull()?.coerceIn(1, 31) ?: 1
                     val providerName = provider.ifBlank { "My Provider" }
                     onConfirm(providerName, limit, day)
-                }
+                },
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Save")
+                Text("✅ Save")
             }
         },
         dismissButton = {
