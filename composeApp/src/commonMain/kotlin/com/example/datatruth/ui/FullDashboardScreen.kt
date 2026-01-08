@@ -26,12 +26,17 @@ fun Double.roundTo(decimals: Int): Double {
     return kotlin.math.round(this * multiplier) / multiplier
 }
 
-// Format timestamp from millis to readable string
+// Format timestamp from millis to readable string (KMP compatible)
 fun formatTimestamp(millis: Long): String {
-    // Convert to a simple time format
-    val date = java.util.Date(millis)
-    val format = java.text.SimpleDateFormat("MMM dd, HH:mm", java.util.Locale.getDefault())
-    return format.format(date)
+    val totalSeconds = millis / 1000
+    val seconds = (totalSeconds % 60).toInt()
+    val totalMinutes = totalSeconds / 60
+    val minutes = (totalMinutes % 60).toInt()
+    val totalHours = totalMinutes / 60
+    val hours = (totalHours % 24).toInt()
+    val days = (totalHours / 24).toInt()
+
+    return "Day $days, ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
